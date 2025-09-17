@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+/* ソース全般-ブロードキャスト間
+ * 
+ */
+
+
+package s2b;
+
+service AudioSource {
+  rpc GetFrame (stream AudioFrameRequest) returns (stream AudioFrameResponse) {};
+}
+
+message AudioFrameRequest {
+    uint64 num_target_samples = 1; //目標を伝える
+}
+
+message AudioFrame { // stereoを仕様とする
+  uint64 num_samples = 1; // per 1 channel
+  bytes frame = 2; // pure array of samples in bytes (big endian)
+}
+
+message AudioFrameResponse{
+  AudioFrame af = 1;
+  // Error err = 2; <- EOFなど?
+}
