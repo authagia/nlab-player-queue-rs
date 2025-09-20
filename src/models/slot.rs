@@ -1,30 +1,31 @@
 use core::time::Duration;
-use rodio::source::TrackPosition;
+use rodio::source::{TrackPosition, UniformSourceIterator};
 use rodio::{Decoder, Source};
 use std::path::PathBuf;
-use std::{
-    fs::File,
-    io::{BufReader},
-};
+use std::{fs::File, io::BufReader};
 
 use rodio::conversions::SampleTypeConverter;
 
 use anyhow::{Ok, Result};
 
-pub struct Slot<I> {
-    cassette: TrackPosition<I>,
+pub struct Slot<I>
+where
+    I: Source,
+{
+    cassette: I,
     pub duration: Duration,
     pub playback_position: Duration,
 }
 
-impl Slot<Decoder<BufReader<File>>> {
+impl Slot<TrackPosition<UniformSourceIterator<Decoder<BufReader<File>>>>> {
     pub fn insert(path: PathBuf) -> Self {
         let file = File::open(path).unwrap();
-        let decoder = Decoder::try_from(file).unwrap().track_position();
-        let dur = decoder.total_duration().unwrap();
+        let decoder = Decoder::try_from(file).unwrap();
+        let formatter = UniformSourceIterator::new(decoder, 2, 48_000).track_position();
+        let dur = formatter.total_duration().unwrap();
 
         Slot {
-            cassette: decoder,
+            cassette: formatter,
             duration: dur,
             playback_position: Duration::new(0, 0),
         }
