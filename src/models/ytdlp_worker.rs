@@ -47,3 +47,46 @@ impl Iterator for YtdlpWorker {
         self.lines.next()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::YtdlpWorker;
+
+    #[test]
+    fn download_audio() {
+        let url = "";
+        let wk = YtdlpWorker::new(
+            url,
+            &[
+                "--newline",
+                "--no-color",
+                "--write-info-json",
+                "--no-playlist",
+                "-f bestaudio",
+                "-o %(extractor)s.%(id)s.%(ext)s",
+                "-P ~//media/",
+                "-x",
+                "--audio-format=m4a",
+                "--audio-quality=144k",
+            ],
+        )
+        .unwrap();
+        for line in wk {
+            print!("\r{:?}", line.unwrap());
+        }
+    }
+}
+
+/*
+   newline: true,
+      color: false,
+      write_info_json: true,
+      playlist: false,
+    }
+
+{
+      extract_audio: true,
+      format: "bestaudio",
+      output: "%(extractor)s.%(id)s.%(ext)s",
+      paths: "dl/",
+     } */
