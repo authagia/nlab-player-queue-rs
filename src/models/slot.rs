@@ -1,0 +1,95 @@
+use core::time::Duration;
+use rodio::source::TrackPosition;
+use rodio::{Decoder, Source};
+use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::{BufReader},
+};
+
+use rodio::conversions::SampleTypeConverter;
+
+use anyhow::{Ok, Result};
+
+pub struct Slot<I> {
+    cassette: TrackPosition<I>,
+    pub duration: Duration,
+    pub playback_position: Duration,
+}
+
+impl Slot<Decoder<BufReader<File>>> {
+    pub fn insert(path: PathBuf) -> Self {
+        let file = File::open(path).unwrap();
+        let decoder = Decoder::try_from(file).unwrap().track_position();
+        let dur = decoder.total_duration().unwrap();
+
+        Slot {
+            cassette: decoder,
+            duration: dur,
+            playback_position: Duration::new(0, 0),
+        }
+    }
+
+    pub fn play(&mut self, output_buffer: &mut [i16]) -> Result<usize> {
+        let demand = self.cassette.by_ref().take(output_buffer.len());
+        let conv = SampleTypeConverter::new(demand);
+        let mut count = 0;
+        for (item, val) in output_buffer.iter_mut().zip(conv) {
+            *item = val;
+            count += 1;
+        }
+        let pb = self.cassette.get_pos();
+        self.playback_position = pb;
+        Ok(count)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::fs::OpenOptions;
+    use std::io::Write;
+    use std::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn insert_cassette() {
+        let path_str = "";
+        let path = PathBuf::from_str(path_str).unwrap();
+        let slot = Slot::insert(path);
+        println!("{:?}", slot.duration);
+    }
+
+    fn write_i16_to_file(path_str: &str, data: &[i16]) -> Result<()> {
+        let path = PathBuf::from_str(path_str).unwrap();
+        // 1. ファイルを開く（存在しない場合は作成）
+        let mut file = OpenOptions::new().append(true).create(true).open(path)?;
+
+        // 2. データをバイト列に変換して書き込む
+        for &sample in data {
+            // 各i16をバイト列に変換
+            let bytes = sample.to_le_bytes();
+            // ファイルに書き込む
+            file.write_all(&bytes)?;
+        }
+
+        // 成功した場合はOk(())を返す
+        Ok(())
+    }
+
+    #[test]
+    fn play_n_samples() {
+        let mut buf = vec![0; 32 * 1024];
+
+        let path_str = "";
+        let path = PathBuf::from_str(path_str).unwrap();
+        let mut slot = Slot::insert(path);
+
+        for i in 0..3 {
+            let n_read = slot.play(&mut buf).unwrap();
+            println!("{:?}", n_read);
+            println!("{:?}", slot.playback_position);
+            // let _ = write_i16_to_file("", &buf);
+        }
+    }
+}

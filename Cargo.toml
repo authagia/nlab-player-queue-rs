@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.99"
 prost = "0.14.1"
+rodio = { version = "0.21.1", default-features = false, features = ["symphonia-all"] }
 tonic = "0.14.2"
 
 [build-dependencies]
