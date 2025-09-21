@@ -54,14 +54,14 @@ impl PlayerQueue {
     }
 
     /// Appends a new ID to the end of the playlist file.
-    pub fn append(&mut self, id: String) -> Result<()> {
+    pub fn append(&mut self, id: &str) -> Result<()> {
         let mut file = OpenOptions::new().append(true).open(&self.file_path)?;
         writeln!(file, "{}", id)?;
         Ok(())
     }
 
     /// 指定されたIDと行番号に一致する行をプレイリストファイルから削除します。
-    pub fn remove_at(&mut self, id: String, line_number: usize) -> Result<()> {
+    pub fn remove_at(&mut self, id: &str, line_number: usize) -> Result<()> {
         let mut entries = self.get_entries()?;
 
         // 行番号が有効な範囲内にあるか確認
@@ -88,9 +88,9 @@ impl PlayerQueue {
     /// The function requires the IDs and their corresponding line numbers to handle duplicates correctly.
     pub fn move_next_to_at(
         &mut self,
-        src_id: String,
+        src_id: &str,
         src_line: usize,
-        dst_id: String,
+        dst_id: &str,
         dst_line: usize,
     ) -> Result<()> {
         let mut entries = self.get_entries()?;
