@@ -40,6 +40,7 @@ impl YtdlpWorker {
 }
 
 /// YtdlpWorkerをイテレーターとして実装
+/// TODO: 出力のタイプを定義
 impl Iterator for YtdlpWorker {
     type Item = Result<String, std::io::Error>;
 
