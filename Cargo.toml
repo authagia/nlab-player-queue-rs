@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.99"
+confy = "1.0.0"
 prost = "0.14.1"
 rodio = { version = "0.21.1", default-features = false, features = ["symphonia-all"] }
 serde = { version = "1.0.226", features = ["derive"] }
