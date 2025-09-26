@@ -1,6 +1,6 @@
 use anyhow::{Ok, Result, anyhow};
 use std::fs::{self, File, OpenOptions};
-use std::io::{ BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::PathBuf;
 use std::result::Result::Ok as stdOk;
 
@@ -18,6 +18,10 @@ impl PlayerQueue {
             .open(&file_path)?;
 
         Ok(Self { file_path })
+    }
+
+    pub fn size(&self) -> Result<usize> {
+        Ok(self.get_entries()?.len())
     }
 
     pub fn list_all(&self) -> Result<Vec<String>> {

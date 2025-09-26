@@ -12,12 +12,20 @@ pub struct Slot<I>
 where
     I: Source,
 {
-    cassette: I,
+    cassette: Option<I>,
     pub duration: Duration,
     pub playback_position: Duration,
 }
 
 impl Slot<TrackPosition<UniformSourceIterator<Decoder<BufReader<File>>>>> {
+    pub fn new() -> Self {
+        Slot {
+            cassette: None,
+            duration: Duration::from_nanos(0),
+            playback_position: Duration::from_nanos(0),
+        }
+    }
+
     pub fn insert(path: PathBuf) -> Self {
         let file = File::open(path).unwrap();
         let decoder = Decoder::try_from(file).unwrap();
@@ -25,23 +33,28 @@ impl Slot<TrackPosition<UniformSourceIterator<Decoder<BufReader<File>>>>> {
         let dur = formatter.total_duration().unwrap();
 
         Slot {
-            cassette: formatter,
+            cassette: Some(formatter),
             duration: dur,
             playback_position: Duration::new(0, 0),
         }
     }
 
     pub fn play(&mut self, output_buffer: &mut [i16]) -> Result<usize> {
-        let demand = self.cassette.by_ref().take(output_buffer.len());
-        let conv = SampleTypeConverter::new(demand);
-        let mut count = 0;
-        for (item, val) in output_buffer.iter_mut().zip(conv) {
-            *item = val;
-            count += 1;
+        match self.cassette.as_mut() {
+            None => anyhow::bail!("No cassette inserted"),
+            Some(cassette) => {
+                let demand = cassette.take(output_buffer.len());
+                let conv = SampleTypeConverter::new(demand);
+                let mut count = 0;
+                for (item, val) in output_buffer.iter_mut().zip(conv) {
+                    *item = val;
+                    count += 1;
+                }
+                let pb = cassette.get_pos();
+                self.playback_position = pb;
+                return Ok(count)
+            }
         }
-        let pb = self.cassette.get_pos();
-        self.playback_position = pb;
-        Ok(count)
     }
 }
 
