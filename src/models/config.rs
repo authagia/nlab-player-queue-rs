@@ -6,4 +6,5 @@ use serde::Deserialize;
 pub struct Config{
     pub data_dir: PathBuf,
     pub ytdlp_path: String, // for Command
+    pub ytdlp_option: Vec<String>,
 } 
